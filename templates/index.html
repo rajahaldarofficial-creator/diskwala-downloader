@@ -9,6 +9,30 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    .video-shell { position: relative; background: #000; overflow: hidden; }
+    #videoPlayer { display:block; width:100%; max-width:100%; background:#000; }
+    #videoPlayer:fullscreen {
+      width:100vw; height:100vh; max-width:none;
+      object-fit:contain; background:#000;
+    }
+    #videoPlayer:-webkit-full-screen {
+      width:100vw; height:100vh; max-width:none;
+      object-fit:contain; background:#000;
+    }
+    .fullscreen-btn {
+      position:absolute; right:12px; bottom:52px; z-index:10;
+      border:0; border-radius:10px; padding:9px 12px;
+      background:rgba(0,0,0,.75); color:#fff;
+      font:600 13px Inter,sans-serif; cursor:pointer;
+      backdrop-filter:blur(8px);
+    }
+    .fullscreen-btn:hover { background:rgba(0,0,0,.9); }
+    @media (max-width:600px) {
+      .fullscreen-btn { right:8px; bottom:48px; padding:8px 10px; font-size:12px; }
+    }
+  </style>
 </head>
 <body>
   <div class="bg-orb orb-one"></div>
@@ -18,16 +42,9 @@
     <header class="topbar">
       <a class="brand" href="#">
         <span class="brand-icon">↓</span>
-        <span>
-          <strong>Diskwala Downloader</strong>
-          <small>Fast • Simple • Secure</small>
-        </span>
+        <span><strong>Diskwala Downloader</strong><small>Fast • Simple • Secure</small></span>
       </a>
-      <nav>
-        <a class="active" href="#">Home</a>
-        <a href="#howto">How to Use</a>
-        <a href="#about">About</a>
-      </nav>
+      <nav><a class="active" href="#">Home</a><a href="#howto">How to Use</a><a href="#about">About</a></nav>
       <button class="theme-btn" type="button" aria-label="Toggle theme">☾</button>
     </header>
 
@@ -35,18 +52,14 @@
       <div class="badge">DISKWALA DOWNLOADER <span>v1.0</span></div>
       <h1>Download Diskwala <span>Videos &amp; Files</span></h1>
       <p>Paste a Diskwala link below and get the direct download or streaming link instantly.</p>
-
       <form id="extractForm" class="extract-form">
         <div class="url-box">
           <span>↗</span>
           <input id="url" name="url" type="url" autocomplete="off" placeholder="Paste your Diskwala link here" required>
           <button id="clearBtn" class="clear-btn" type="button" aria-label="Clear">×</button>
         </div>
-        <button id="extractBtn" class="extract-btn" type="submit">
-          <span>↓</span><b>Extract Link</b>
-        </button>
+        <button id="extractBtn" class="extract-btn" type="submit"><span>↓</span><b>Extract Link</b></button>
       </form>
-
       <div id="status" class="status hidden"></div>
     </section>
 
@@ -68,13 +81,11 @@
 
         <div class="file-info">
           <h2 id="fileName">Extracted file</h2>
-
           <div class="meta-grid">
             <div class="meta-item"><span class="meta-icon">▱</span><div><small>File Size</small><strong id="fileSize">N/A</strong></div></div>
             <div class="meta-item"><span class="meta-icon">◷</span><div><small>Uploaded At</small><strong id="uploadedAt">N/A</strong></div></div>
             <div class="meta-item"><span class="meta-icon">▣</span><div><small>File Type</small><strong id="fileType">MEDIA</strong></div></div>
           </div>
-
           <div class="actions">
             <button id="watchBtn" class="action blue" type="button"><span>▷</span><div><b>Watch Online</b><small>Play in browser</small></div></button>
             <a id="downloadBtn" class="action green" target="_blank" rel="noopener noreferrer"><span>☁</span><div><b>Download Now</b><small>Direct download</small></div></a>
@@ -85,10 +96,17 @@
       </div>
 
       <div id="playerSection" class="player-section hidden">
-        <div class="player-title"><div><span>DIRECT PLAYER</span><strong>Watch Online</strong></div><button id="closePlayer" type="button">×</button></div>
+        <div class="player-title">
+          <div><span>DIRECT PLAYER</span><strong>Watch Online</strong></div>
+          <button id="closePlayer" type="button">×</button>
+        </div>
         <div class="video-shell">
           <video id="videoPlayer" controls playsinline preload="metadata"></video>
-          <div id="playerFallback" class="player-fallback hidden"><strong>Player couldn't start</strong><small>Use Download Now to open the media directly.</small></div>
+          <button id="fullscreenBtn" class="fullscreen-btn" type="button">⛶ Fullscreen</button>
+          <div id="playerFallback" class="player-fallback hidden">
+            <strong>Player couldn't start</strong>
+            <small>Use Download Now to open the media directly.</small>
+          </div>
         </div>
       </div>
 
@@ -104,9 +122,7 @@
       <div class="feature"><span>∞</span><div><strong>No Login Required</strong><small>Just paste and extract</small></div></div>
     </section>
 
-    <footer id="about">
-      <strong>Diskwala Downloader</strong><span>•</span><span>Use only content you are authorized to access.</span>
-    </footer>
+    <footer id="about"><strong>Diskwala Downloader</strong><span>•</span><span>Use only content you are authorized to access.</span></footer>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -126,12 +142,14 @@
     const placeholder = document.getElementById('previewPlaceholder');
     const playerSection = document.getElementById('playerSection');
     const player = document.getElementById('videoPlayer');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
     const fallback = document.getElementById('playerFallback');
     const watchBtn = document.getElementById('watchBtn');
     const playOverlay = document.getElementById('playOverlay');
     const downloadBtn = document.getElementById('downloadBtn');
     const directBtn = document.getElementById('directBtn');
     const appBtn = document.getElementById('appBtn');
+
     let hls = null;
     let currentUrl = '';
 
@@ -154,11 +172,14 @@
       if (!url) return;
       const isHls = /m3u8/i.test(url);
       playerSection.classList.remove('hidden');
+
       if (isHls && window.Hls && Hls.isSupported()) {
         hls = new Hls();
         hls.loadSource(url);
         hls.attachMedia(player);
-        hls.on(Hls.Events.ERROR, (_, data) => { if (data && data.fatal) fallback.classList.remove('hidden'); });
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          if (data && data.fatal) fallback.classList.remove('hidden');
+        });
       } else {
         player.src = url;
         player.addEventListener('error', () => fallback.classList.remove('hidden'), { once: true });
@@ -172,10 +193,44 @@
       setTimeout(() => player.play().catch(() => {}), 250);
     }
 
+    async function fullscreenVideo() {
+      try {
+        if (document.fullscreenElement === player) {
+          if (document.exitFullscreen) await document.exitFullscreen();
+          return;
+        }
+
+        if (player.requestFullscreen) {
+          await player.requestFullscreen();
+          return;
+        }
+
+        if (player.webkitEnterFullscreen) {
+          player.webkitEnterFullscreen();
+          return;
+        }
+
+        if (player.webkitRequestFullscreen) {
+          player.webkitRequestFullscreen();
+          return;
+        }
+
+        alert('Fullscreen is not supported on this device.');
+      } catch (error) {
+        console.log('Video fullscreen failed:', error);
+      }
+    }
+
     clearBtn.onclick = () => { input.value = ''; input.focus(); };
     watchBtn.onclick = openWatch;
     playOverlay.onclick = openWatch;
-    document.getElementById('closePlayer').onclick = () => { player.pause(); playerSection.classList.add('hidden'); };
+    fullscreenBtn.onclick = fullscreenVideo;
+    player.addEventListener('dblclick', fullscreenVideo);
+
+    document.getElementById('closePlayer').onclick = () => {
+      player.pause();
+      playerSection.classList.add('hidden');
+    };
 
     appBtn.onclick = () => {
       if (currentUrl) window.location.href = currentUrl;
@@ -185,10 +240,12 @@
       e.preventDefault();
       const url = input.value.trim();
       if (!url) return;
+
       result.classList.add('hidden');
       playerSection.classList.add('hidden');
       resetPlayer();
       showStatus('Extracting your media link...', 'info');
+
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span><b>Extracting...</b>';
 
@@ -198,11 +255,13 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url })
         });
+
         const data = await response.json();
         if (!response.ok || !data.ok) throw new Error(data.error || 'Extraction failed.');
 
         const name = data.file_name || 'Extracted media';
         const ext = (name.split('.').pop() || 'MEDIA').toUpperCase();
+
         fileName.textContent = name;
         fileType.textContent = ext;
         fileExt.textContent = ext;
@@ -211,6 +270,7 @@
 
         const mediaUrl = data.stream_url || data.download_url || '';
         currentUrl = mediaUrl;
+
         if (data.thumbnail) {
           thumb.src = data.thumbnail;
           thumb.classList.remove('hidden');
@@ -234,6 +294,7 @@
         result.classList.remove('hidden');
         showStatus('Extraction successful — your media is ready.', 'success');
         result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
       } catch (err) {
         showStatus(err.message, 'error');
       } finally {
