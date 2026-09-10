@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>Diskwala Downloader</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Inter,Arial,sans-serif;background:#090f20;color:#fff}
+body{background:
+radial-gradient(circle at 80% 10%,rgba(101,64,190,.15),transparent 32%),
+radial-gradient(circle at 15% 20%,rgba(38,117,255,.12),transparent 30%),
+#090f20}
+.header{height:94px;border-bottom:1px solid rgba(255,255,255,.09);display:flex;align-items:center;justify-content:space-between;padding:0 4%;gap:25px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:62px;height:62px;border-radius:20px;display:grid;place-items:center;font-size:34px;background:linear-gradient(135deg,#7657ff,#9d55ff);box-shadow:0 10px 35px rgba(122,75,255,.28)}
+.brand h2{margin:0;font-size:24px}.brand p{margin:5px 0 0;color:#aeb5c5;font-size:14px}
+.version{font-size:12px;padding:6px 10px;border-radius:12px;background:#1b2855;color:#91a7ff;margin-left:7px}
+.nav{display:flex;gap:34px;color:#dce2ef;font-size:16px}.nav span{padding:13px 4px}.nav .active{color:#7cc7ff;border-bottom:2px solid #709dff}
+.container{max-width:1180px;margin:auto;padding:38px 24px 42px}
+.hero{text-align:center}.hero h1{font-size:39px;margin:0;font-weight:800;background:linear-gradient(90deg,#65c5ff,#a768ff,#729bff);-webkit-background-clip:text;color:transparent}.hero p{font-size:20px;color:#c7ccda;margin:13px 0 30px}
+.search{display:flex;gap:14px;align-items:center}
+.input-wrap{height:73px;flex:1;border:2px solid #6c758d;border-radius:17px;background:rgba(15,21,39,.82);display:flex;align-items:center;padding:0 19px;box-shadow:inset 0 0 25px rgba(0,0,0,.12)}
+.input-wrap .icon{font-size:24px;color:#aeb8ca;margin-right:17px}.input-wrap input{border:0;outline:0;background:transparent;color:#e9edf6;width:100%;font-size:17px}.clear{color:#aab1c0;font-size:23px;cursor:pointer}
+.extract{height:73px;min-width:290px;border-radius:17px;border:1px solid #8c72ff;background:linear-gradient(100deg,#168fff,#a72df4);color:white;font-size:18px;font-weight:800;box-shadow:0 12px 30px rgba(99,64,255,.2)}
+.alert{margin-top:25px;padding:18px 22px;border-radius:16px;border:2px solid #00a66c;background:rgba(0,96,64,.36);display:flex;align-items:center;gap:17px}.check{width:42px;height:42px;border-radius:50%;background:#00e57a;color:#062516;display:grid;place-items:center;font-size:26px;font-weight:900}.alert b{font-size:18px}.alert div div{margin-top:5px;color:#9de3c6}
+.result{margin-top:25px;border:1px solid #33425f;border-radius:18px;background:linear-gradient(110deg,rgba(22,31,52,.96),rgba(15,23,40,.96));padding:28px;display:grid;grid-template-columns:370px 1fr;gap:28px}
+.preview{position:relative;border-radius:14px;overflow:hidden;min-height:290px;background:#070b13}.preview img{width:100%;height:100%;min-height:290px;object-fit:cover;display:block}.play{position:absolute;inset:0;margin:auto;width:66px;height:66px;border-radius:50%;display:grid;place-items:center;background:rgba(5,15,35,.72);border:1px solid rgba(255,255,255,.5);font-size:28px;cursor:pointer}.duration,.type{position:absolute;bottom:13px;padding:7px 10px;border-radius:8px;background:rgba(9,13,23,.8);font-size:13px}.duration{left:13px}.type{right:13px}
+.info h2{font-size:26px;margin:2px 0 22px;word-break:break-word}.stats{display:flex;gap:30px;color:#b4bccb;margin-bottom:22px}.stat{display:flex;gap:10px;align-items:center}.stat-icon{width:39px;height:39px;border-radius:12px;background:#1b263e;display:grid;place-items:center}.stat small{display:block;color:#8d97aa;margin-bottom:4px}.stat strong{color:#f1f3f8}
+.buttons{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}.btn{border:0;border-radius:12px;padding:14px 10px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;min-height:62px}.btn small{display:block;font-weight:500;margin-top:4px;opacity:.85}.watch{background:linear-gradient(100deg,#268cff,#126cff)}.download{background:linear-gradient(100deg,#00bd72,#09c36d)}.direct{background:linear-gradient(100deg,#6872ff,#7b43f2)}.appbtn{margin-top:14px;width:300px;background:#172039;border:1px solid #50617e}
+.note{margin-top:25px;border:1px solid #4d8ed0;border-left:8px solid #62b8ff;border-radius:14px;padding:17px 22px;background:rgba(31,78,123,.58);color:#bcd6ee}.note b{display:block;color:#86caff;font-size:16px;margin-bottom:5px}.note strong{color:#00ef79}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:23px;margin-top:30px}.feature{border:1px solid #33405a;border-radius:16px;background:rgba(20,28,46,.8);padding:26px 30px}.feature .ficon{font-size:30px;float:left;margin-right:20px}.feature b{font-size:16px}.feature p{margin:8px 0 0;color:#aeb6c6;font-size:13px}
+footer{text-align:center;color:#8b94a8;font-size:13px;padding:20px}
+
+.video-shell{display:none;position:fixed;inset:0;z-index:999999;background:#000;align-items:center;justify-content:center}
+.video-shell.open{display:flex}.video-shell video{width:100vw;height:100dvh;object-fit:contain;background:#000}
+.video-controls{position:absolute;right:15px;top:max(15px,env(safe-area-inset-top));z-index:2;display:flex;gap:9px}.video-controls button{background:rgba(20,24,34,.85);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:11px 14px;font-weight:700}
+body.video-open{overflow:hidden}
+@media(max-width:850px){.header{height:auto;padding:16px 20px}.nav{display:none}.result{grid-template-columns:1fr}.preview{min-height:240px}.preview img{min-height:240px}.buttons{grid-template-columns:1fr}.appbtn{width:100%}.features{grid-template-columns:1fr}.hero h1{font-size:30px}.hero p{font-size:16px}.search{flex-direction:column}.extract{width:100%;min-width:0}.input-wrap{width:100%}}
+</style>
+</head>
+
+<body>
+<header class="header">
+  <div class="brand">
+    <div class="logo">⬇</div>
+    <div><h2>Diskwala Downloader <span class="version">v1.0</span></h2><p>Fast • Simple • Secure</p></div>
+  </div>
+  <nav class="nav"><span class="active">⌂ Home</span><span>◔ How to Use</span><span>ⓘ About</span><span>☾</span></nav>
+</header>
+
+<main class="container">
+<section class="hero">
+<h1>Download Diskwala Videos &amp; Files</h1>
+<p>Paste a Diskwala link below and get the direct download or streaming link instantly.</p>
+</section>
+
+<div class="search">
+  <div class="input-wrap"><span class="icon">🔗</span><input id="urlInput" placeholder="https://www.diskwala.com/app/..." autocomplete="off"><span class="clear" id="clearBtn">⊗</span></div>
+  <button class="extract" id="extractBtn">⇩ &nbsp; Extract Link</button>
+</div>
+
+<div class="alert" id="alert" style="display:none">
+  <div class="check">✓</div><div><b>Extraction successful!</b><div>Your file is ready. Use the player below or download directly.</div></div>
+</div>
+
+<section class="result" id="result" style="display:none">
+  <div class="preview">
+    <img id="thumb" alt="Video thumbnail">
+    <button class="play" id="previewPlay">▶</button>
+    <span class="duration" id="duration">--:--</span><span class="type" id="type">MP4</span>
+  </div>
+  <div class="info">
+    <h2 id="title">Diskwala Video</h2>
+    <div class="stats">
+      <div class="stat"><div class="stat-icon">▱</div><div><small>File Size</small><strong id="size">N/A</strong></div></div>
+      <div class="stat"><div class="stat-icon">▣</div><div><small>Uploaded At</small><strong id="uploaded">N/A</strong></div></div>
+      <div class="stat"><div class="stat-icon">▰</div><div><small>File Type</small><strong id="filetype">MP4</strong></div></div>
+    </div>
+    <div class="buttons">
+      <button class="btn watch" id="watchBtn">▶ Watch Online<small>Play in browser</small></button>
+      <button class="btn download" id="downloadBtn">☁ Download Now<small>(Working)</small></button>
+      <button class="btn direct" id="directBtn">⇩ Download 1/1 File<small>Direct Download</small></button>
+    </div>
+    <button class="btn appbtn" id="openAppBtn">▶ Open In App<small>Open with Diskwala App</small></button>
+  </div>
+</section>
+
+<div class="note"><b>ⓘ Note:</b>If fast Download button does not work, please use Download button or use our <strong>Android App.</strong></div>
+
+<section class="features">
+<div class="feature"><span class="ficon">⚡</span><b>Super Fast</b><p>Get direct links instantly</p></div>
+<div class="feature"><span class="ficon">♜</span><b>100% Secure</b><p>Your data is safe with us</p></div>
+<div class="feature"><span class="ficon">∞</span><b>No Login Required</b><p>Just paste and download</p></div>
+</section>
+</main>
+
+<footer>© 2024 Diskwala Downloader. Not affiliated with Diskwala. For educational purposes only.</footer>
+
+<div class="video-shell" id="videoShell">
+  <div class="video-controls">
+    <button id="fullscreenBtn">⛶ Fullscreen</button>
+    <button id="closeBtn">✕ Close</button>
+  </div>
+  <video id="videoPlayer" controls playsinline webkit-playsinline></video>
+</div>
+
+<script>
+const tg=window.Telegram?.WebApp||null;
+if(tg){try{tg.ready();tg.expand()}catch(e){}}
+const $=id=>document.getElementById(id);
+let directUrl="",hls=null,fs=false;
+
+function pick(o,keys){
+  for(const k of keys){let v=o;for(const p of k.split(".")){v=v?.[p]}if(v!==undefined&&v!==null&&String(v).trim())return v}
+  return "";
+}
+function findUrl(o){
+  const keys=["url","download_url","downloadUrl","direct_url","directUrl","video_url","videoUrl","play_url","playUrl","stream_url","streamUrl","data.url","data.download_url","data.downloadUrl","data.direct_url","data.video_url","data.play_url","result.url","result.download_url","result.video_url"];
+  const x=pick(o,keys); if(x)return x;
+  function walk(v){if(typeof v==="string"&&/^https?:\/\//i.test(v))return v;if(Array.isArray(v)){for(const a of v){let r=walk(a);if(r)return r}}else if(v&&typeof v==="object"){for(const k in v){let r=walk(v[k]);if(r)return r}}return ""}
+  return walk(o);
+}
+function openVideo(){
+  if(!directUrl)return;
+  $("videoShell").style.display="flex";
+  $("videoPlayer").src=directUrl;
+  $("videoPlayer").load();
+}
+function enterFS(){
+  fs=true;$("fullscreenBtn").textContent="✕ Exit Fullscreen";document.body.classList.add("video-open");
+  if(tg?.requestFullscreen)try{tg.requestFullscreen()}catch(e){}
+  try{
+    const v=$("videoPlayer");
+    if(v.requestFullscreen){let p=v.requestFullscreen();p?.catch(()=>{})}
+    else if(v.webkitEnterFullscreen)v.webkitEnterFullscreen();
+  }catch(e){}
+}
+function exitFS(){
+  fs=false;$("fullscreenBtn").textContent="⛶ Fullscreen";document.body.classList.remove("video-open");
+  try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}
+  if(tg?.exitFullscreen)try{tg.exitFullscreen()}catch(e){}
+}
+$("fullscreenBtn").onclick=()=>fs?exitFS():enterFS();
+$("closeBtn").onclick=()=>{exitFS();$("videoShell").style.display="none";$("videoPlayer").pause();$("videoPlayer").removeAttribute("src");if(hls){hls.destroy();hls=null}};
+$("previewPlay").onclick=openVideo;$("watchBtn").onclick=openVideo;
+$("clearBtn").onclick=()=>{$("urlInput").value="";$("result").style.display="none";$("alert").style.display="none"};
+
+$("downloadBtn").onclick=()=>directUrl&&window.open(directUrl,"_blank");
+$("directBtn").onclick=()=>directUrl&&window.open(directUrl,"_blank");
+$("openAppBtn").onclick=()=>directUrl&&window.open(directUrl,"_blank");
+
+$("extractBtn").onclick=async()=>{
+ const u=$("urlInput").value.trim();if(!u)return;
+ $("extractBtn").disabled=true;$("extractBtn").textContent="Extracting...";
+ try{
+   const r=await fetch("/api/extract",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:u})});
+   const d=await r.json();if(!r.ok)throw Error(d.error||d.message||"Extraction failed");
+   directUrl=findUrl(d);if(!directUrl)throw Error("No media URL found in API response.");
+   const title=pick(d,["title","name","filename","file_name","data.title","data.name","data.filename","result.title"]);
+   const thumb=pick(d,["thumbnail","thumbnail_url","thumbnailUrl","cover","data.thumbnail","data.thumbnail_url","result.thumbnail"]);
+   const size=pick(d,["size","file_size","fileSize","data.size","data.file_size","result.size"]);
+   const uploaded=pick(d,["uploaded_at","uploadedAt","created_at","createdAt","data.uploaded_at","result.uploaded_at"]);
+   const ft=pick(d,["file_type","fileType","mime_type","mimeType","data.file_type","result.file_type"])||(/\.(mp4|webm|mov)(?:\?|$)/i.test(directUrl)?"MP4":"Video");
+   $("title").textContent=title||"Diskwala Video";$("size").textContent=size||"N/A";$("uploaded").textContent=uploaded||"N/A";$("filetype").textContent=ft;
+   $("type").textContent=ft.toUpperCase();if(thumb){$("thumb").src=thumb}
+   $("result").style.display="grid";$("alert").style.display="flex";
+ }catch(e){alert(e.message||"Extraction failed")}
+ finally{$("extractBtn").disabled=false;$("extractBtn").textContent="⇩  Extract Link"}
+};
+</script>
+</body>
+</html>
