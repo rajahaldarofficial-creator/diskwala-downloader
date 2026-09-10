@@ -36,8 +36,8 @@ radial-gradient(circle at 15% 20%,rgba(38,117,255,.12),transparent 30%),
 .features{display:grid;grid-template-columns:repeat(3,1fr);gap:23px;margin-top:30px}.feature{border:1px solid #33405a;border-radius:16px;background:rgba(20,28,46,.8);padding:26px 30px}.feature .ficon{font-size:30px;float:left;margin-right:20px}.feature b{font-size:16px}.feature p{margin:8px 0 0;color:#aeb6c6;font-size:13px}
 footer{text-align:center;color:#8b94a8;font-size:13px;padding:20px}
 
-.video-shell{display:none;position:fixed;inset:0;z-index:999999;background:#000;align-items:center;justify-content:center}
-.video-shell.open{display:flex}.video-shell video{width:100vw;height:100dvh;object-fit:contain;background:#000}
+.video-shell{display:none;position:relative;margin-top:18px;width:100%;background:#000;border-radius:14px;overflow:hidden;align-items:center;justify-content:center}.video-shell.fullscreen{position:fixed;inset:0;width:100vw;height:100dvh;margin:0;border-radius:0;z-index:999999}
+.video-shell.open{display:flex;min-height:240px}.video-shell video{width:100%;height:auto;max-height:70vh;object-fit:contain;background:#000}.video-shell.fullscreen video{width:100vw;height:100dvh;max-height:none;object-fit:contain}
 .video-controls{position:absolute;right:15px;top:max(15px,env(safe-area-inset-top));z-index:2;display:flex;gap:9px}.video-controls button{background:rgba(20,24,34,.85);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:11px 14px;font-weight:700}
 body.video-open{overflow:hidden}
 @media(max-width:850px){.header{height:auto;padding:16px 20px}.nav{display:none}.result{grid-template-columns:1fr}.preview{min-height:240px}.preview img{min-height:240px}.buttons{grid-template-columns:1fr}.appbtn{width:100%}.features{grid-template-columns:1fr}.hero h1{font-size:30px}.hero p{font-size:16px}.search{flex-direction:column}.extract{width:100%;min-width:0}.input-wrap{width:100%}}
@@ -128,11 +128,12 @@ function findUrl(o){
 function openVideo(){
   if(!directUrl)return;
   $("videoShell").style.display="flex";
+  $("videoShell").classList.add("open");
   $("videoPlayer").src=directUrl;
   $("videoPlayer").load();
 }
 function enterFS(){
-  fs=true;$("fullscreenBtn").textContent="✕ Exit Fullscreen";document.body.classList.add("video-open");
+  fs=true;$("fullscreenBtn").textContent="✕ Exit Fullscreen";document.body.classList.add("video-open");$("videoShell").classList.add("fullscreen");
   if(tg?.requestFullscreen)try{tg.requestFullscreen()}catch(e){}
   try{
     const v=$("videoPlayer");
@@ -141,7 +142,7 @@ function enterFS(){
   }catch(e){}
 }
 function exitFS(){
-  fs=false;$("fullscreenBtn").textContent="⛶ Fullscreen";document.body.classList.remove("video-open");
+  fs=false;$("fullscreenBtn").textContent="⛶ Fullscreen";document.body.classList.remove("video-open");$("videoShell").classList.remove("fullscreen");
   try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}
   if(tg?.exitFullscreen)try{tg.exitFullscreen()}catch(e){}
 }
