@@ -190,6 +190,59 @@ $("extractBtn").onclick=async()=>{
 };
 </script>
 
+
+<script>
+// App promotion popup: opens on every page load. Countdown unlocks the
+// download button after 10 seconds; the popup stays open until the user closes it.
+document.addEventListener("DOMContentLoaded", function () {
+  const modal = document.getElementById("appModal");
+  const closeBtn = document.getElementById("appClose");
+  const laterBtn = document.getElementById("appLater");
+  const downloadBtn = document.getElementById("appDownload");
+  const timerEl = document.getElementById("appTimer");
+  if (!modal) return;
+
+  const APP_URL = "#"; // Replace with Play Store/APK link when ready.
+  let seconds = 10;
+  let timer = null;
+
+  function closePopup() {
+    modal.classList.remove("show");
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+
+  function startPopup() {
+    modal.classList.add("show");
+    seconds = 10;
+    timerEl.textContent = seconds;
+    downloadBtn.disabled = true;
+
+    if (timer) clearInterval(timer);
+    timer = setInterval(function () {
+      seconds -= 1;
+      timerEl.textContent = seconds;
+      if (seconds <= 0) {
+        clearInterval(timer);
+        timer = null;
+        timerEl.textContent = "✓";
+        downloadBtn.disabled = false;
+        downloadBtn.classList.add("ready");
+      }
+    }, 1000);
+  }
+
+  closeBtn.addEventListener("click", closePopup);
+  laterBtn.addEventListener("click", closePopup);
+  downloadBtn.addEventListener("click", function () {
+    if (!downloadBtn.disabled && APP_URL !== "#") {
+      window.location.href = APP_URL;
+    }
+  });
+
+  startPopup();
+});
+</script>
+
 <!-- App download popup -->
 <div class="app-modal" id="appModal" role="dialog" aria-modal="true" aria-labelledby="appModalTitle">
   <div class="app-card">
