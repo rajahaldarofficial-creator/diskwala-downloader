@@ -128,7 +128,7 @@ body.video-open{overflow:hidden}
 const tg=window.Telegram?.WebApp||null;
 if(tg){try{tg.ready();tg.expand()}catch(e){}}
 const $=id=>document.getElementById(id);
-let directUrl="",hls=null,fs=false;
+let streamUrl="",downloadUrl="",fileName="",hls=null,fs=false;
 
 function pick(o,keys){
   for(const k of keys){let v=o;for(const p of k.split(".")){v=v?.[p]}if(v!==undefined&&v!==null&&String(v).trim())return v}
@@ -141,11 +141,41 @@ function findUrl(o){
   return walk(o);
 }
 function openVideo(){
-  if(!directUrl)return;
-  $("videoShell").style.display="flex";
-  $("videoShell").classList.add("open");
-  $("videoPlayer").src=directUrl;
-  $("videoPlayer").load();
+  if(!streamUrl)return;
+
+  const shell=$("videoShell");
+  const video=$("videoPlayer");
+
+  shell.style.display="flex";
+  shell.classList.add("open");
+
+  if(hls){
+    hls.destroy();
+    hls=null;
+  }
+
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
+
+  if(/\.m3u8(?:\?|$)/i.test(streamUrl) && window.Hls && Hls.isSupported()){
+    hls=new Hls();
+    hls.loadSource(streamUrl);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED,()=>{
+      video.play().catch(()=>{});
+    });
+  }else if(
+    /\.m3u8(?:\?|$)/i.test(streamUrl) &&
+    video.canPlayType("application/vnd.apple.mpegurl")
+  ){
+    video.src=streamUrl;
+    video.play().catch(()=>{});
+  }else{
+    video.src=streamUrl;
+    video.load();
+    video.play().catch(()=>{});
+  }
 }
 function enterFS(){
   fs=true;$("fullscreenBtn").textContent="✕ Exit Fullscreen";document.body.classList.add("video-open");$("videoShell").classList.add("fullscreen");
@@ -166,9 +196,17 @@ $("closeBtn").onclick=()=>{exitFS();$("videoShell").style.display="none";$("vide
 $("previewPlay").onclick=openVideo;$("watchBtn").onclick=openVideo;
 $("clearBtn").onclick=()=>{$("urlInput").value="";$("result").style.display="none";$("alert").style.display="none"};
 
-$("downloadBtn").onclick=()=>directUrl&&window.open(directUrl,"_blank");
-$("directBtn").onclick=()=>directUrl&&window.open(directUrl,"_blank");
-$("openAppBtn").onclick=()=>directUrl&&window.open(directUrl,"_blank");
+$("downloadBtn").onclick=()=>{
+  if(downloadUrl) window.open(downloadUrl,"_blank");
+};
+
+$("directBtn").onclick=()=>{
+  if(downloadUrl) window.open(downloadUrl,"_blank");
+};
+
+$("openAppBtn").onclick=()=>{
+  if(downloadUrl) window.open(downloadUrl,"_blank");
+};
 
 $("extractBtn").onclick=async()=>{
  const u=$("urlInput").value.trim();if(!u)return;
@@ -176,15 +214,54 @@ $("extractBtn").onclick=async()=>{
  try{
    const r=await fetch("/api/extract",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:u})});
    const d=await r.json();if(!r.ok)throw Error(d.error||d.message||"Extraction failed");
-   directUrl=findUrl(d);if(!directUrl)throw Error("No media URL found in API response.");
+   streamUrl=pick(d,[
+     "stream_url","streamUrl",
+     "data.stream_url","data.streamUrl",
+     "result.stream_url"
+   ]);
+
+   downloadUrl=pick(d,[
+     "download_url","downloadUrl",
+     "data.download_url","data.downloadUrl",
+     "result.download_url"
+   ]);
+
+   fileName=pick(d,[
+     "file_name","filename","name",
+     "data.file_name","data.filename","data.name"
+   ]) || "DiskWala_Download.mp4";
+
+   if(!streamUrl) streamUrl=downloadUrl;
+   if(!downloadUrl) downloadUrl=streamUrl;
+
+   if(!streamUrl) throw Error("No media URL found in API response.");
+
    const title=pick(d,["title","name","filename","file_name","data.title","data.name","data.filename","result.title"]);
-   const thumb=pick(d,["thumbnail","thumbnail_url","thumbnailUrl","cover","data.thumbnail","data.thumbnail_url","result.thumbnail"]);
+   const thumb=pick(d,[
+     "thumbnail","thumbnail_url","thumbnailUrl","cover",
+     "data.thumbnail","data.thumbnail_url","data.thumbnailUrl",
+     "result.thumbnail","result.thumbnail_url"
+   ]);
    const size=pick(d,["size","file_size","fileSize","data.size","data.file_size","result.size"]);
    const uploaded=pick(d,["uploaded_at","uploadedAt","created_at","createdAt","data.uploaded_at","result.uploaded_at"]);
-   const ft=pick(d,["file_type","fileType","mime_type","mimeType","data.file_type","result.file_type"])||(/\.(mp4|webm|mov)(?:\?|$)/i.test(directUrl)?"MP4":"Video");
-   $("title").textContent=title||"Diskwala Video";$("size").textContent=size||"N/A";$("uploaded").textContent=uploaded||"N/A";$("filetype").textContent=ft;
-   $("type").textContent=ft.toUpperCase();if(thumb){$("thumb").src=thumb}
-   $("result").style.display="grid";$("alert").style.display="flex";
+   const ft=pick(d,["file_type","fileType","mime_type","mimeType","data.file_type","result.file_type"])||
+     (/\.(mp4|webm|mov)(?:\?|$)/i.test(streamUrl)?"MP4":"Video");
+
+   $("title").textContent=title||fileName||"Diskwala Video";
+   $("size").textContent=size||"N/A";
+   $("uploaded").textContent=uploaded||"N/A";
+   $("filetype").textContent=ft;
+   $("type").textContent=ft.toUpperCase();
+
+   if(thumb){
+     $("thumb").src=thumb;
+     $("thumb").onerror=()=>{
+       $("thumb").removeAttribute("src");
+     };
+   }
+
+   $("result").style.display="grid";
+   $("alert").style.display="flex";
  }catch(e){alert(e.message||"Extraction failed")}
  finally{$("extractBtn").disabled=false;$("extractBtn").textContent="⇩  Extract Link"}
 };
